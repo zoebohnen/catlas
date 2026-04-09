@@ -29,7 +29,7 @@ function LocationMarker() {
   ) : null
 }
 
-function CatMarkers({ cats, onCatClick }) {
+function CatMarkers({ cats, onCatClick, aliasCounts }) {
   const L = require('leaflet')
   const [hoveredId, setHoveredId] = useState(null)
 
@@ -61,7 +61,12 @@ function CatMarkers({ cats, onCatClick }) {
               🐱 {cat.name}
             </button>
             {cat.description && <p style={{ margin: '4px 0 0', fontSize: '13px' }}>{cat.description}</p>}
-            {cat.friendly && <p style={{ margin: '4px 0 0', fontSize: '13px' }}>😊 Friendly cat!</p>}
+            {cat.friendly && <p style={{ margin: '4px 0 0', fontSize: '13px' }}>Friendly cat</p>}
+            {aliasCounts[cat.id] > 0 && (
+              <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#92400e' }}>
+                {aliasCounts[cat.id]} alias{aliasCounts[cat.id] !== 1 ? 'es' : ''}
+              </p>
+            )}
           </div>
         </Popup>
       </Marker>
@@ -71,6 +76,7 @@ function CatMarkers({ cats, onCatClick }) {
 
 export default function Map({ refresh, onCatClick }) {
   const [cats, setCats] = useState([])
+  const [aliasCounts, setAliasCounts] = useState({})
 
   useEffect(() => {
     const fetchCats = async () => {
@@ -80,7 +86,22 @@ export default function Map({ refresh, onCatClick }) {
         .not('latitude', 'is', null)
       if (!error) setCats(data)
     }
+
+    const fetchAliasCounts = async () => {
+      const { data, error } = await supabase
+        .from('cat_aliases')
+        .select('cat_id')
+      if (!error && data) {
+        const counts = {}
+        data.forEach(row => {
+          counts[row.cat_id] = (counts[row.cat_id] || 0) + 1
+        })
+        setAliasCounts(counts)
+      }
+    }
+
     fetchCats()
+    fetchAliasCounts()
   }, [refresh])
 
   return (
@@ -94,7 +115,7 @@ export default function Map({ refresh, onCatClick }) {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <LocationMarker />
-      <CatMarkers cats={cats} onCatClick={onCatClick} />
+      <CatMarkers cats={cats} onCatClick={onCatClick} aliasCounts={aliasCounts} />
     </MapContainer>
   )
 }

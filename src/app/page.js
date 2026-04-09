@@ -16,10 +16,13 @@ export default function Home() {
   const [focusedCatId, setFocusedCatId] = useState(null)
   const [refresh, setRefresh] = useState(0)
   const [user, setUser] = useState(null)
+const [hasCheckedAuth, setHasCheckedAuth] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
+      setHasCheckedAuth(true)
+      if (!session?.user) setShowLogin(true)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -66,7 +69,7 @@ export default function Home() {
           onCatClick={(id) => { setFocusedCatId(id); setShowCatalog(true) }}
         />
       </div>
-      {showLogin && <Login onClose={() => setShowLogin(false)} />}
+      {showLogin && <Login onClose={() => setShowLogin(false)} onBrowse={() => setShowLogin(false)} />}
       {showAddCat && <AddCatForm onClose={() => { setShowAddCat(false); setRefresh(r => r + 1) }} />}
       {showCatalog && <CATalog onClose={() => { setShowCatalog(false); setFocusedCatId(null) }} focusedCatId={focusedCatId} />}
       <div className="bg-amber-800 border-t border-amber-900 p-4 flex justify-around relative z-50">
