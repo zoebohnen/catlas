@@ -13,6 +13,7 @@ function LocationMarker() {
     map.locate({ setView: true, maxZoom: 16 })
     map.on('locationfound', (e) => {
       setPosition(e.latlng)
+      map.setView(e.latlng, 16)
     })
   }, [map])
 
